@@ -12,15 +12,17 @@ public class Reporter implements Runnable {
 	// === 변수 ===
 	private Vault vault; // 금고 참조
 	private List<Thief> thieves; // 도둑 목록 참조
-	private Police police; // 경찰 참조
+	private List<Police> polices; // 경찰 참조
+	
 	private static final int MAP_SIZE = 21; // 맵 크기 (0~20 좌표)
-		
+	private static final int CELL_WIDTH = 5;
+	
 	// === 생성자 ===
 
-	public Reporter(Vault vault, List<Thief> thieves, Police police) {
+	public Reporter(Vault vault, List<Thief> thieves, List<Police> polices) {
 		this.vault = vault;
 		this.thieves = thieves;
-		this.police = police;
+		this.polices = polices;
 	}
 
 	// === 메서드 ===
@@ -30,6 +32,7 @@ public class Reporter implements Runnable {
 	* 2. printMap() 호출
 	* 3. 0.5초 대기 (Thread.sleep)
 	*/
+	
 	@Override
 	public void run() {
 		
@@ -69,61 +72,82 @@ public class Reporter implements Runnable {
 		System.out.println("===== Police vs Thief Simulation =====");
 	    System.out.println("현재 시간: " + getCurrentTime());
 	    System.out.println("금고 잔액: " + vault.getBalance());
-	    System.out.println("체포 횟수: " + police.getArrestCount());
+	    System.out.println("체포 횟수: " + getTotalArrestCount());
 	    System.out.println("총 도난액: " + vault.getTotalStolen());
 	    System.out.println();
 	    
 	    // 21x21 사각형 맵 그리기
-	    for (int y = 0; y < MAP_SIZE; y++) {
-            for (int x = 0; x < MAP_SIZE; x++) {
-                System.out.print(getSymbol(x, y) + " ");
+	    for (int y = MAP_SIZE - 1; y >= 0; y--) {
+	    	
+	    	// 왼쪽 Y좌표
+	        System.out.printf("%2d | ", y);
+	        
+	        for (int x = 0; x < MAP_SIZE; x++) {
+                System.out.printf("%-" + CELL_WIDTH + "s", getSymbol(x, y));
             }
+            
             System.out.println();
         }
 	    
+	    // X 좌표축 출력
+	    System.out.print("     ");  // 왼쪽 여백 맞추기 
+        for (int x = 0; x < MAP_SIZE; x++) {
+            System.out.printf("%-" + CELL_WIDTH + "d", x);
+        }
+        
+	    System.out.println();
+	    
 	    // 하단 범례 출력
 	    System.out.println();
-	    System.out.println("V: 금고 | P: 경찰 | 숫자: 도둑 | X: 체포");
+	    System.out.println("💰: 금고 | 👮🏻‍♂️: 경찰 | 🥷: 도둑 | ❌: 체포 | ⬜: 빈 공간");
 	    System.out.println();
 	    
 	    // 각 도둑 상세 정보 출력
 	    for (Thief thief : thieves) {
             System.out.println("도둑 " + thief.getId()
-                    + " | 상태: " + thief.isCaught()
+                    + " | 상태: " + (thief.isCaught() ? "체포됨" : "활동중")
                     + " | 위치: (" + thief.getX() + "," + thief.getY() + ")"
                     + " | 훔친 금액: " + thief.getStolenAmount());
         }
 	    
-	    int[] policePosition = police.getPosition();
-	    // 경찰 위치 출력
+	    // 각 경찰 위치 출력
 	    System.out.println();
-        System.out.println("경찰 위치: (" + policePosition[0] + "," + policePosition[1] + ")");
+	    for (Police police : polices) {
+            int[] pos = police.getPosition();
+            System.out.println("경찰 " + police.getId()
+                    + " 위치: (" + pos[0] + "," + pos[1] + ")");
+        }
+	    
 	    
 	        
 	}
-		/**
-		 * (x, y) 좌표에 표시할 심볼 결정
-		 * - 금고 위치면: 'V'
-		 * - 경찰 위치면: 'P'
-		 * - 도둑 위치면:
-		 * * 체포됨: 'X'
-		 * * 활동중: 도둑 ID (1, 2, 3)
-		 * - 빈 공간: '□'
-		 * @param x X 좌표
-		 * @param y Y 좌표
-		 * @return 표시할 문자
-		 */
-	private char getSymbol(int x, int y) {
+		
+
+	/**
+	 * (x, y) 좌표에 표시할 심볼 결정
+	 * - 금고 위치면: 💰
+	 * - 경찰 위치면: 👮
+	 * - 도둑 위치면:
+	 * * 체포됨: 'X'
+	 * * 활동중: 🥷 
+	 * - 빈 공간: '□'
+	 * @param x X 좌표
+	 * @param y Y 좌표
+	 * @return 표시할 문자
+	 */
+	
+	private String getSymbol(int x, int y) {
 		// 금고 위치 'V' 심볼 반환 
 		if (vault.getX() == x && vault.getY() == y) {
-            return 'V';
+            return "\uD83D\uDCB0"; // 💰
         }
 		
-		int[] policePosition = police.getPosition();
-		
-		// 경찰 위치 'P' 심볼 반환 
-		if (policePosition[0] == x && policePosition[1] == y) {
-            return 'P';
+		// 경찰 위치 심볼 반환
+		for (Police police : polices) {
+            int[] pos = police.getPosition();
+            if (pos[0] == x && pos[1] == y) {
+                return "👮"; // 👮
+            }
         }
 		
 		// 도둑 위치 심볼 반환 
@@ -132,15 +156,15 @@ public class Reporter implements Runnable {
             	
             	// 체포된 상태면 'X' 반환 
                 if (thief.isCaught()) {
-                    return 'X';
+                    return "\u274C";  // ❌
                 }
-                // 활동중: 도둑 ID (1, 2, 3)
-                return Character.forDigit(thief.getId(), 10);
+                // 활동중
+                return "\uD83E\uDD77"; // 🥷‍
             }
         }
         
         // 빈 공간
-        return '□';
+        return "⬜";
 	}
 		/**
 		* 콘솔 화면 지우기
@@ -154,15 +178,25 @@ public class Reporter implements Runnable {
 		System.out.print("\033[H\033[2J"); // ANSI 이스케이프 코드를 출력
         System.out.flush();  // 출력 버퍼를 즉시 비우는 역할
 	}
-		/**
-		 * 현재 시간 문자열 반환
-		 * - SimpleDateFormat 사용
-		 * @return "HH:mm:ss" 형식 문자열
-		 */
+	
+	/**
+	 * 현재 시간 문자열 반환
+	 * - SimpleDateFormat 사용
+	 * @return "HH:mm:ss" 형식 문자열
+	 */
+	
 	private String getCurrentTime() {
 		SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss");
         return sdf.format(new Date());
 	}
+	
+	private int getTotalArrestCount() {
+		 int total = 0;
+	     for (Police police : polices) {
+	    	 total += police.getArrestCount();
+	     }
+	     return total;
+	 }
 	
 }
 
