@@ -21,13 +21,14 @@ public class Vault {
 	 * 
 	 * 현재 잔액이 훔칠 금액보다 충분할 때만 실행
 	 */
-	public synchronized void steal(int amount) {
+	public synchronized int steal(int amount) {
 		if (amount <= 0)
-			return;
-		if (balance >= amount) {
-			balance -= amount;
-			totalStolen += amount;
-		}
+			return 0;
+		if (balance < amount)
+			return 0;
+		balance -= amount;
+		totalStolen += amount;
+		return amount;
 	}
 
 	/*
