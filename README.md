@@ -59,4 +59,28 @@
 
 ---
 
-## 📂 프로젝트 구조
+## 실행 방법
+
+### 1) Runnable JAR 빌드 (Eclipse)
+
+1. 프로젝트 우클릭 → Export  
+2. Java → Runnable JAR file → Next  
+3. Main 클래스 선택
+
+- 콘솔 실행: `police_thief.Main`  
+- GUI 실행: `police_thief.gui.GuiMain`
+
+4. Export destination → JAR 저장 경로 지정  
+   예: `C:\build\police-thief-simulation.jar`
+
+5. Library handling  
+   → **Package required libraries into generated JAR**
+
+6. Finish → JAR 생성 완료
+
+---
+
+### 2) 실행
+
+```bash
+java -jar police-thief-simulation.jar
