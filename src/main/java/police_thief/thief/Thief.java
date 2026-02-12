@@ -8,8 +8,8 @@ public class Thief implements Runnable{
 	// Thread(Thief-i)
 	private int id; // 도둑 고유번호
 	private Vault vault; // 금고
-	private boolean caught = false; // 실행 제어
 	private int stolenAmount; // 훔친 가격
+	private volatile boolean caught = false;
 	
 	// x, y 좌표
 	private int x;
@@ -47,10 +47,13 @@ public class Thief implements Runnable{
 					&& currentY == vault.getY()) {
 					// 훔칠 가격(100 ~ 1000)
 					int amount = random.nextInt(901) +100;
-					vault.steal(amount); // synchronized
-					stolenAmount += amount;
-					System.out.println("Thief-"+id+"이(가) "
-							+amount+"원을 훔쳤습니다!");
+					int stolen = vault.steal(amount);
+					if (stolen > 0) {
+						synchronized (positionLock) {
+							stolenAmount += stolen;
+						}
+						System.out.println("Thief-" + id + "이(가) " + stolen + "원을 훔쳤습니다!");
+					}
 				}
 				
 				Thread.sleep(500); // 대기
@@ -115,7 +118,9 @@ public class Thief implements Runnable{
 	}
 	// 훔친 가격 인스턴스
 	public int getStolenAmount() {
-		return stolenAmount;
+		synchronized (positionLock) {
+	        return stolenAmount;
+	    }
 	}
 	// 도둑 id값 반환
 	public int getId() {
